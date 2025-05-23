@@ -1,5 +1,6 @@
 #include "types.h"
 #include "riscv.h"
+#include "sysproc.h"
 #include "defs.h"
 #include "param.h"
 #include "memlayout.h"
@@ -98,5 +99,23 @@ sys_trace(void)
   int n;
   argint(0, &n);
   myproc()->mask = n;
+
+  return 0;
+}
+
+uint64
+sys_sysinfo(void)
+{
+  struct proc *p = myproc();
+  uint64 infoaddr; // user pointer to struct sysinfo
+  struct sysinfo info; // local copy to clone to userspace
+
+  argaddr(0, &infoaddr);
+  info.memfree = memfree();
+  info.nproc = numproc();
+
+  if(copyout(p->pagetable, infoaddr, (char *)&info, sizeof(info)) < 0)
+      return -1;
+
   return 0;
 }
